@@ -5,17 +5,17 @@ import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class ChatServer {
 
 	private static final int PORT = 7777;
-	public static List<PrintWriter> listPrintWriter = null;
+	static Map<String, PrintWriter> userMap = null;
 
 	public static void main(String[] args) {
 
-		listPrintWriter = new ArrayList<PrintWriter>();
+		userMap = new LinkedHashMap<String, PrintWriter>();
 		ServerSocket serverSocket = null;
 
 		try {
@@ -24,11 +24,11 @@ public class ChatServer {
 
 			while (true) {
 				Socket socket = serverSocket.accept(); // blocking
-				ChatServerThread serverThread = new ChatServerThread(socket, listPrintWriter);
+				ChatServerThread serverThread = new ChatServerThread(socket, userMap);
 				serverThread.start();
 			}
 		} catch (IOException e) {
-			System.out.println("ChatServer : " + e);
+			System.out.println("ChatServer > " + e);
 			e.printStackTrace();
 		} finally {
 			try {

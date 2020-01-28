@@ -43,10 +43,6 @@ public class ChatWindow {
 	}
 
 	public void show() throws Exception {
-		/*
-		 * UI 초기화 브븐
-		 * 
-		 */
 		// Button
 		buttonSend.setBackground(Color.GRAY);
 		buttonSend.setForeground(Color.WHITE);
@@ -64,10 +60,12 @@ public class ChatWindow {
 			@Override
 			public void keyReleased(KeyEvent e) {
 				char keyCode = e.getKeyChar();
-				if (keyCode == KeyEvent.VK_ENTER)
+				if (keyCode == KeyEvent.VK_ENTER) {
 					sendMessage();
+					textField.setText("");
+					textField.requestFocus();
+				}
 			}
-
 		});
 
 		// Pannel
@@ -78,6 +76,8 @@ public class ChatWindow {
 
 		// TextArea
 		textArea.setEditable(false);
+		textArea.append("▶ [귓속말 사용법]\n");
+		textArea.append("▶ to>받는사람>보낼 메시지\n\n");
 		frame.add(BorderLayout.CENTER, textArea);
 
 		// Frame
@@ -89,26 +89,29 @@ public class ChatWindow {
 		frame.setVisible(true);
 		frame.pack();
 
-		/**
-		 * 2. IOStream 초기화
-		 */
 		BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
 		pr = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
-		/**
-		 * 3. thread 생성 작업
-		 */
 		new ChatClientThread(br).start();
-
 	}
 
 	private void sendMessage() {
 		String message = textField.getText();
-		String[] tokens = message.split(":");
-		if ("quit".equals(tokens[0]) == true) {
-			pr.println("quit:");
-			return;
+		String[] tokens = message.split(">");
+		if(tokens[0].equals("")) {
+			pr.println("error>" + name);
+		} else if ("quit".equals(tokens[0]) == true) {
+			pr.println("quit>");
 		} else {
-			pr.println("message:" + tokens[0]);
+			if (tokens[0].equals("to") == true) {
+				if(tokens.length == 3)
+					pr.println(tokens[0] + ">" + tokens[1] + ">" + tokens[2]);
+				else if(tokens.length != 3) {
+					pr.println("error>" + name);
+					return;
+				}
+			} else {
+				pr.println("message>" + tokens[0]);
+			}
 		}
 	}
 
@@ -124,24 +127,17 @@ public class ChatWindow {
 			try {
 				while (true) {
 					String data = br.readLine();
-					if (data == null) {
-						textArea.append("closed by Server.\n");
-						textArea.append("채팅을 종료합니다.\n");
-						break;
-					}
 					if (data.equals("quit")) {
 						textArea.append("채팅을 종료합니다.\n");
 						break;
 					}
 					textArea.append(data + "\n");
-					textField.setText("");
-					textField.requestFocus();
 				}
 				Thread.sleep(1000);
 				System.exit(0);
 			} catch (Exception e) {
-				textArea.append("갑작스러운 오류로 서버가 연결 끊김!\n");
-				System.out.println("갑작스러운 오류로 서버가 연결 끊김!\n" + e);
+				textArea.append("연결 끊김\n");
+				System.out.println("연결 끊김\n" + e);
 			}
 		}
 
